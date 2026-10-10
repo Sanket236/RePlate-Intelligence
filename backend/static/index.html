@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>RePlate Intelligence</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-family:'Inter',system-ui,-apple-system,sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}
+body{background:#fff;color:#111827;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+a{text-decoration:none;color:inherit}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:13px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:4px}
+
+/* ── Layout ──────────────────────────────────────────── */
+#app{display:flex;height:100vh;overflow:hidden}
+#sidebar{width:240px;min-width:240px;background:#fff;border-right:1px solid #e5e7eb;display:flex;flex-direction:column;height:100vh;overflow:hidden;transition:transform .25s}
+#main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+#right-panel{width:272px;min-width:272px;background:#fff;border-left:1px solid #e5e7eb;overflow-y:auto;display:flex;flex-direction:column}
+#topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid #e5e7eb;flex-shrink:0;gap:12px}
+#content{flex:1;overflow-y:auto}
+
+/* ── Sidebar ─────────────────────────────────────────── */
+.sb-header{display:flex;align-items:center;justify-content:space-between;padding:14px 14px 10px;border-bottom:1px solid #f3f4f6}
+.logo-row{display:flex;align-items:center;gap:8px}
+.logo-icon{width:32px;height:32px;background:#7c3aed;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon svg{color:#fff}
+.logo-text{line-height:1.2}
+.logo-name{font-size:13px;font-weight:700;color:#111827}
+.logo-sub{font-size:10px;color:#7c3aed;font-weight:600}
+.profile-row{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid #f3f4f6}
+.avatar{width:30px;height:30px;border-radius:50%;background:#ede9fe;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#7c3aed;flex-shrink:0}
+.profile-info .name{font-size:12px;font-weight:600;color:#111827}
+.profile-info .role{font-size:10px;color:#9ca3af}
+.search-row{padding:8px 10px;border-bottom:1px solid #f3f4f6}
+.search-box{display:flex;align-items:center;gap:6px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 8px}
+.search-box input{border:none;background:none;flex:1;font-size:12px;color:#374151;outline:none}
+.search-box input::placeholder{color:#9ca3af}
+.kbd{font-size:10px;color:#9ca3af;border:1px solid #e5e7eb;border-radius:4px;padding:1px 4px;background:#fff}
+.nav-section{padding:6px 8px;flex-shrink:0}
+.nav-label{font-size:10px;font-weight:600;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;padding:4px 6px 2px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;color:#6b7280;transition:background .15s,color .15s;white-space:nowrap;overflow:hidden}
+.nav-item:hover{background:#f9fafb;color:#374151}
+.nav-item.active{background:#f5f3ff;color:#7c3aed}
+.nav-item.active svg{color:#7c3aed}
+.nav-item svg{width:15px;height:15px;flex-shrink:0;color:#9ca3af}
+.nav-item.active svg{color:#7c3aed}
+.chat-history{flex:1;overflow-y:auto;padding:0 8px}
+.hist-item{font-size:11px;color:#6b7280;padding:5px 8px;border-radius:6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist-item:hover{background:#f9fafb;color:#374151}
+.sb-footer{padding:10px;border-top:1px solid #f3f4f6;flex-shrink:0}
+.btn-new-chat{width:100%;padding:9px;background:#7c3aed;color:#fff;border-radius:8px;font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:background .15s}
+.btn-new-chat:hover{background:#6d28d9}
+
+/* ── Top bar ─────────────────────────────────────────── */
+.topbar-left{display:flex;align-items:center;gap:10px;min-width:0}
+.page-title{font-size:15px;font-weight:700;color:#111827;white-space:nowrap}
+.page-sub{font-size:11px;color:#9ca3af;white-space:nowrap;display:none}
+.status-badge{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 8px;border-radius:20px;white-space:nowrap}
+.status-online{background:#dcfce7;color:#16a34a}
+.status-offline{background:#fee2e2;color:#dc2626}
+.status-loading{background:#fef3c7;color:#d97706}
+.dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.dot-green{background:#16a34a}
+.dot-red{background:#dc2626}
+.dot-amber{background:#d97706}
+.mobile-menu-btn{display:none;align-items:center;justify-content:center;width:34px;height:34px;border-radius:8px;color:#6b7280;background:none}
+.mobile-menu-btn:hover{background:#f3f4f6}
+
+/* ── Cards & Layout ──────────────────────────────────── */
+.page{display:none;padding:20px;max-width:900px}
+.page.active{display:block}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;color:#111827;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.metric-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:16px}
+.metric-label{font-size:11px;color:#6b7280;font-weight:500;margin-bottom:4px}
+.metric-value{font-size:24px;font-weight:700;color:#111827;line-height:1}
+.metric-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.metric-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.icon-purple{background:#f5f3ff;color:#7c3aed}
+.icon-green{background:#dcfce7;color:#16a34a}
+.icon-blue{background:#dbeafe;color:#2563eb}
+.icon-amber{background:#fef3c7;color:#d97706}
+
+/* ── Buttons ─────────────────────────────────────────── */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,opacity .15s;border:none}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:#7c3aed;color:#fff}
+.btn-primary:hover:not(:disabled){background:#6d28d9}
+.btn-secondary{background:#fff;color:#374151;border:1px solid #e5e7eb}
+.btn-secondary:hover:not(:disabled){background:#f9fafb}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-danger:hover:not(:disabled){background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:11px}
+.btn-ghost{background:none;color:#6b7280;padding:5px 8px;border-radius:6px;font-size:12px}
+.btn-ghost:hover{background:#f3f4f6;color:#374151}
+
+/* ── Forms ───────────────────────────────────────────── */
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:11px;font-weight:600;color:#374151;margin-bottom:4px}
+.form-input{width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:8px;font-size:12px;color:#111827;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:#7c3aed;box-shadow:0 0 0 2px #ede9fe}
+.form-input::placeholder{color:#9ca3af}
+select.form-input{background:#fff}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── Table ───────────────────────────────────────────── */
+.table-wrap{overflow-x:auto;border-radius:10px;border:1px solid #e5e7eb}
+table{width:100%;border-collapse:collapse;min-width:500px}
+th{background:#f9fafb;padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #e5e7eb;white-space:nowrap}
+td{padding:10px 14px;font-size:12px;color:#374151;border-bottom:1px solid #f3f4f6}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafafa}
+
+/* ── Badge ───────────────────────────────────────────── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-green{background:#dcfce7;color:#16a34a}
+.badge-amber{background:#fef3c7;color:#d97706}
+.badge-red{background:#fee2e2;color:#dc2626}
+.badge-purple{background:#f5f3ff;color:#7c3aed}
+.badge-gray{background:#f3f4f6;color:#6b7280}
+.badge-blue{background:#dbeafe;color:#2563eb}
+
+/* ── Chat ────────────────────────────────────────────── */
+#chat-page{display:none;flex-direction:column;height:100%}
+#chat-page.active{display:flex}
+#chat-messages{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px}
+.msg-row{display:flex;gap:10px}
+.msg-row.user{flex-direction:row-reverse}
+.msg-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:600}
+.msg-avatar.ai{background:#f5f3ff;color:#7c3aed}
+.msg-avatar.user{background:#f3f4f6;color:#6b7280}
+.msg-bubble{max-width:72%;padding:10px 14px;border-radius:12px;font-size:13px;line-height:1.6;word-break:break-word}
+.msg-bubble.ai{background:#fff;border:1px solid #e5e7eb;color:#111827;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.msg-bubble.user{background:#7c3aed;color:#fff}
+.msg-bubble.loading{background:#f9fafb;color:#9ca3af;border:1px solid #e5e7eb}
+.msg-meta{display:flex;align-items:center;gap:8px;margin-top:6px;padding:0 2px}
+.msg-time{font-size:10px;color:#9ca3af}
+.fast-check-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;background:#f5f3ff;color:#7c3aed;border-radius:20px;font-size:10px;font-weight:600;margin-bottom:6px}
+.copy-btn{font-size:10px;color:#9ca3af;cursor:pointer;padding:2px 5px;border-radius:4px}
+.copy-btn:hover{background:#f3f4f6;color:#374151}
+#chat-composer{flex-shrink:0;border-top:1px solid #e5e7eb;padding:12px 16px;background:#fff}
+.composer-box{border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;transition:border-color .15s}
+.composer-box:focus-within{border-color:#7c3aed;box-shadow:0 0 0 2px #ede9fe}
+.composer-toolbar{display:flex;align-items:center;gap:2px;padding:6px 10px 0;border-bottom:1px solid #f3f4f6}
+.fmt-btn{width:26px;height:26px;border-radius:6px;font-size:12px;font-weight:600;color:#6b7280;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fmt-btn:hover{background:#f3f4f6;color:#374151}
+.composer-input-row{display:flex;align-items:flex-end;gap:8px;padding:8px 10px}
+#chat-input{flex:1;border:none;resize:none;font-size:13px;color:#111827;outline:none;background:none;line-height:1.5;max-height:120px}
+#chat-input::placeholder{color:#9ca3af}
+.send-btn{width:34px;height:34px;background:#7c3aed;color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.send-btn:hover:not(:disabled){background:#6d28d9}
+.send-btn:disabled{opacity:.5;cursor:not-allowed}
+.composer-hint{font-size:10px;color:#9ca3af;text-align:center;margin-top:6px}
+.chat-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:8px;color:#9ca3af;text-align:center;padding:20px}
+.chat-empty-icon{width:48px;height:48px;background:#f5f3ff;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:4px}
+
+/* ── Right panel ─────────────────────────────────────── */
+.rp-section{padding:14px;border-bottom:1px solid #f3f4f6}
+.rp-title{font-size:12px;font-weight:700;color:#111827;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rp-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.rp-label{font-size:11px;color:#6b7280}
+.rp-val{font-size:11px;font-weight:600;color:#111827}
+.status-row{display:flex;align-items:center;gap:6px;padding:3px 0}
+.status-row span{font-size:11px}
+.status-green{color:#16a34a}
+.status-amber{color:#d97706}
+.status-red{color:#dc2626}
+.resource-pill{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:20px;font-size:11px;color:#374151;margin:2px;cursor:pointer;text-decoration:none}
+.resource-pill:hover{background:#f5f3ff;border-color:#c4b5fd;color:#7c3aed}
+.progress-bar{height:4px;background:#f3f4f6;border-radius:2px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;background:#7c3aed;border-radius:2px;transition:width .4s}
+
+/* ── Misc ────────────────────────────────────────────── */
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #e5e7eb;border-top-color:#7c3aed;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty-state{text-align:center;padding:40px 20px;color:#9ca3af}
+.empty-state svg{width:40px;height:40px;margin:0 auto 12px;display:block;opacity:.3}
+.empty-state p{font-size:13px}
+.empty-state small{font-size:11px}
+.alert{padding:10px 14px;border-radius:8px;font-size:12px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px}
+.alert-error{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+.alert-success{background:#dcfce7;color:#166534;border:1px solid #bbf7d0}
+.alert-warn{background:#fef3c7;color:#92400e;border:1px solid #fde68a}
+.alert-info{background:#dbeafe;color:#1e40af;border:1px solid #bfdbfe}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title{font-size:15px;font-weight:700;color:#111827}
+.section-sub{font-size:12px;color:#6b7280;margin-top:2px}
+.tabs{display:flex;gap:2px;background:#f3f4f6;padding:3px;border-radius:8px;width:fit-content;margin-bottom:14px}
+.tab{padding:5px 14px;border-radius:6px;font-size:12px;font-weight:500;color:#6b7280;cursor:pointer;transition:.15s}
+.tab.active{background:#fff;color:#7c3aed;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.filter-bar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.chip{padding:4px 12px;border-radius:20px;font-size:11px;font-weight:500;border:1px solid #e5e7eb;color:#6b7280;cursor:pointer;background:#fff}
+.chip.active{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.chip:hover:not(.active){background:#f9fafb}
+.divider{height:1px;background:#f3f4f6;margin:12px 0}
+.text-muted{color:#9ca3af;font-size:11px}
+.text-sm{font-size:12px}
+.flex{display:flex}.items-center{align-items:center}.justify-between{justify-content:space-between}.gap-2{gap:8px}.gap-1{gap:4px}
+.mt-1{margin-top:4px}.mt-2{margin-top:8px}.mb-2{margin-bottom:8px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #e5e7eb}
+.modal-title{font-size:14px;font-weight:700;color:#111827}
+.modal-body{padding:20px}
+.modal-footer{padding:12px 20px;border-top:1px solid #e5e7eb;display:flex;gap:8px;justify-content:flex-end}
+.close-btn{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#6b7280;cursor:pointer;font-size:16px}
+.close-btn:hover{background:#f3f4f6}
+.pagination{display:flex;align-items:center;gap:8px;margin-top:12px;justify-content:flex-end}
+.page-info{font-size:11px;color:#6b7280}
+
+/* ── Chart placeholder ───────────────────────────────── */
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:6px;height:100px;padding-top:10px}
+.chart-bar{flex:1;background:#7c3aed;border-radius:4px 4px 0 0;min-width:12px;transition:height .3s;cursor:pointer;position:relative}
+.chart-bar:hover{background:#6d28d9}
+.chart-bar-label{font-size:9px;color:#9ca3af;text-align:center;margin-top:3px}
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:11px;color:#6b7280}
+.legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── Mobile ──────────────────────────────────────────── */
+@media(max-width:900px){
+  #sidebar{position:fixed;left:0;top:0;bottom:0;z-index:50;transform:translateX(-100%)}
+  #sidebar.open{transform:translateX(0)}
+  #right-panel{display:none}
+  .mobile-menu-btn{display:flex}
+  .page-sub{display:none}
+  .grid-4{grid-template-columns:1fr 1fr}
+  .grid-3{grid-template-columns:1fr 1fr}
+  .form-row{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+  .grid-2,.grid-3,.grid-4{grid-template-columns:1fr}
+  #topbar{padding:10px 14px}
+}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:40}
+.overlay.open{display:block}
+</style>
+</head>
+<body>
+
+<!-- Mobile overlay -->
+<div id="overlay" class="overlay" onclick="closeSidebar()"></div>
+
+<div id="app">
+<!-- ═══════════════════════════════ LEFT SIDEBAR ══════════════════════════════ -->
+<nav id="sidebar">
+  <div class="sb-header">
+    <div class="logo-row">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 12C5 7 7 4 12 3c5 1 7 4 7 9"/><path d="M5 12c0 3 1.5 5 7 7 5.5-2 7-4 7-7"/></svg>
+      </div>
+      <div class="logo-text">
+        <div class="logo-name">RePlate</div>
+        <div class="logo-sub">Intelligence</div>
+      </div>
+    </div>
+    <button class="close-btn" onclick="closeSidebar()" style="display:none" id="sb-close">✕</button>
+  </div>
+
+  <div class="profile-row">
+    <div class="avatar">AD</div>
+    <div class="profile-info">
+      <div class="name">Administrator</div>
+      <div class="role">Food Waste Analyst</div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" placeholder="Search..." id="search-input" autocomplete="off"/>
+      <span class="kbd">⌘K</span>
+    </div>
+  </div>
+
+  <div class="nav-section" style="overflow-y:auto;flex:1">
+    <div class="nav-label">Main</div>
+    <div class="nav-item active" onclick="navTo('overview')" id="nav-overview">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+      Overview
+    </div>
+    <div class="nav-item" onclick="navTo('assistant')" id="nav-assistant">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      AI Assistant
+    </div>
+    <div class="nav-item" onclick="navTo('predictions')" id="nav-predictions">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Waste Predictions
+    </div>
+    <div class="nav-item" onclick="navTo('donations')" id="nav-donations">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M21 18H3"/></svg>
+      Food Donations
+    </div>
+    <div class="nav-item" onclick="navTo('recipients')" id="nav-recipients">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      Recipients
+    </div>
+    <div class="nav-item" onclick="navTo('matching')" id="nav-matching">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Matching
+    </div>
+    <div class="nav-item" onclick="navTo('analytics')" id="nav-analytics">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </div>
+    <div class="nav-label" style="margin-top:8px">More</div>
+    <div class="nav-item" onclick="navTo('library')" id="nav-library">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      Library
+    </div>
+    <div class="nav-item" onclick="navTo('settings')" id="nav-settings">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
+      Settings
+    </div>
+
+    <div class="nav-label" style="margin-top:8px">Pinned Chats</div>
+    <div class="hist-item" onclick="navTo('assistant')">📌 Today's waste analysis</div>
+    <div class="hist-item" onclick="navTo('assistant')">📌 Vegetable donation plan</div>
+    <div class="nav-label" style="margin-top:8px">Recent</div>
+    <div class="hist-item" onclick="navTo('assistant')">Recipient matching query</div>
+    <div class="hist-item" onclick="navTo('assistant')">Model R² score check</div>
+    <div class="hist-item" onclick="navTo('assistant')">Dairy category prediction</div>
+  </div>
+
+  <div class="sb-footer">
+    <button class="btn-new-chat" onclick="startNewChat()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      Start New Chat
+    </button>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════ MAIN ════════════════════════════════════ -->
+<div id="main">
+  <!-- Top bar -->
+  <div id="topbar">
+    <div class="topbar-left">
+      <button class="mobile-menu-btn" onclick="openSidebar()" aria-label="Open menu">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div>
+        <div class="page-title" id="topbar-title">Overview</div>
+        <div class="page-sub">RePlate Intelligence · Predict Waste. Redistribute Food. Create Impact.</div>
+      </div>
+    </div>
+    <div id="system-status" class="status-badge status-loading">
+      <span class="dot dot-amber"></span>
+      <span>Connecting…</span>
+    </div>
+  </div>
+
+  <!-- Page: Overview -->
+  <div id="page-overview" class="page active" style="overflow-y:auto;height:100%">
+    <div class="section-header">
+      <div>
+        <div class="section-title">Good day 👋</div>
+        <div class="section-sub">Here's your food redistribution operation summary.</div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="navTo('assistant')">Ask AI Assistant</button>
+    </div>
+    <div id="overview-metrics" class="grid-4" style="margin-bottom:14px">
+      <div class="metric-card"><div class="flex justify-between items-center"><div><div class="metric-label">Food Donations</div><div class="metric-value" id="ov-donations">—</div><div class="metric-sub" id="ov-donations-sub">Loading…</div></div><div class="metric-icon icon-purple"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M21 18H3"/></svg></div></div></div>
+      <div class="metric-card"><div class="flex justify-between items-center"><div><div class="metric-label">Available Surplus</div><div class="metric-value" id="ov-available">—</div><div class="metric-sub" id="ov-available-sub">kg ready</div></div><div class="metric-icon icon-green"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22V12"/><path d="M5 12C5 7 7 4 12 3c5 1 7 4 7 9"/></svg></div></div></div>
+      <div class="metric-card"><div class="flex justify-between items-center"><div><div class="metric-label">Active Recipients</div><div class="metric-value" id="ov-recipients">—</div><div class="metric-sub" id="ov-recipients-sub">organizations</div></div><div class="metric-icon icon-blue"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div></div></div>
+      <div class="metric-card"><div class="flex justify-between items-center"><div><div class="metric-label">Model R²</div><div class="metric-value" id="ov-r2">—</div><div class="metric-sub">prediction accuracy</div></div><div class="metric-icon icon-amber"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div></div></div>
+    </div>
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Donations by Status (Live)
+        </div>
+        <div id="status-chart"><div class="text-muted">Loading…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Weekly Waste Trend (Illustrative)
+        </div>
+        <div id="trend-chart"></div>
+        <div class="text-muted mt-1">Demo chart — actual session history not available from this dataset.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title flex justify-between">
+        <span>Recent Donations</span>
+        <button class="btn-ghost btn-sm" onclick="navTo('donations')">View all →</button>
+      </div>
+      <div id="ov-table"><div class="text-muted">Loading…</div></div>
+    </div>
+    <div class="grid-4" style="margin-top:12px">
+      <div onclick="navTo('predictions')" style="cursor:pointer" class="card" style="padding:12px">
+        <div style="font-size:11px;font-weight:600;color:#7c3aed;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">🔮</span> Predict Waste
+        </div>
+      </div>
+      <div onclick="navTo('donations')" style="cursor:pointer" class="card" style="padding:12px">
+        <div style="font-size:11px;font-weight:600;color:#16a34a;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">📦</span> Add Donation
+        </div>
+      </div>
+      <div onclick="navTo('matching')" style="cursor:pointer" class="card" style="padding:12px">
+        <div style="font-size:11px;font-weight:600;color:#d97706;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">🤝</span> Match & Plan
+        </div>
+      </div>
+      <div onclick="navTo('recipients')" style="cursor:pointer" class="card" style="padding:12px">
+        <div style="font-size:11px;font-weight:600;color:#2563eb;display:flex;align-items:center;gap:6px">
+          <span style="font-size:16px">🏢</span> Recipients
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: AI Assistant (flex layout) -->
+  <div id="page-assistant" id="chat-page" style="display:none;flex-direction:column;height:calc(100vh - 57px)">
+    <div id="chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">
+      <!-- Welcome message -->
+      <div class="msg-row">
+        <div class="msg-avatar ai">🤖</div>
+        <div>
+          <div class="fast-check-badge">⚡ Welcome</div>
+          <div class="msg-bubble ai">
+            <strong>RePlate Intelligence AI Assistant</strong><br><br>
+            I can help you with:<br>
+            • <strong>Predict food waste</strong> — ask: "Predict waste for 300 meals, dairy category"<br>
+            • <strong>Match donations</strong> — ask: "Match donation #1"<br>
+            • <strong>System status</strong> — ask: "Status" or "Health"<br>
+            • <strong>Model info</strong> — ask: "Model metrics" or "R2 score"<br>
+            • <strong>List donations</strong> — ask: "Show donations"<br><br>
+            <em style="color:#9ca3af;font-size:11px">Running in deterministic fallback mode. Set OPENAI_API_KEY in backend .env for LLM responses.</em>
+          </div>
+          <div class="msg-meta">
+            <span class="msg-time" id="welcome-time"></span>
+            <button class="copy-btn" onclick="copyText(this.parentElement.previousElementSibling.innerText)">Copy</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="chat-composer">
+      <div class="composer-box">
+        <div class="composer-toolbar">
+          <button class="fmt-btn" title="Bold" onclick="applyFmt('**','**')"><b>B</b></button>
+          <button class="fmt-btn" title="Italic" onclick="applyFmt('*','*')"><i>I</i></button>
+          <button class="fmt-btn" title="Strikethrough" onclick="applyFmt('~~','~~')"><s>S</s></button>
+          <div style="flex:1"></div>
+          <button class="btn-ghost btn-sm" onclick="startNewChat()">↺ New chat</button>
+        </div>
+        <div class="composer-input-row">
+          <textarea id="chat-input" rows="2" placeholder="How can I help you? Try: 'Predict waste for 300 meals'"></textarea>
+          <button class="send-btn" id="send-btn" onclick="sendChat()" title="Send (Enter)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="composer-hint">AI insights should be reviewed before operational decisions. Enter to send · Shift+Enter for new line.</div>
+    </div>
+  </div>
+
+  <!-- Page: Waste Predictions -->
+  <div id="page-predictions" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header">
+      <div><div class="section-title">Waste Predictions</div><div class="section-sub">Estimate food waste using the trained RandomForestRegressor (R²=0.9036)</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">🔮 Prediction Inputs</div>
+        <div id="pred-alert"></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Meals Served *</label><input type="number" id="p-meals" class="form-input" value="300" min="1" placeholder="e.g. 300"/></div>
+          <div class="form-group"><label class="form-label">Kitchen Staff *</label><input type="number" id="p-staff" class="form-input" value="12" min="1" placeholder="e.g. 12"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Temperature (°C)</label><input type="number" id="p-temp" class="form-input" value="22" step="0.1" placeholder="e.g. 22"/></div>
+          <div class="form-group"><label class="form-label">Humidity (%)</label><input type="number" id="p-humidity" class="form-input" value="55" min="0" max="100" step="0.1" placeholder="0-100"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Day of Week</label>
+            <select id="p-day" class="form-input">
+              <option value="0">Monday</option><option value="1">Tuesday</option><option value="2">Wednesday</option>
+              <option value="3">Thursday</option><option value="4">Friday</option><option value="5">Saturday</option><option value="6">Sunday</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Special Event</label>
+            <select id="p-event" class="form-input"><option value="0">No</option><option value="1">Yes</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Historical Avg Waste (kg)</label><input type="number" id="p-past" class="form-input" value="25" min="0" step="0.1" placeholder="e.g. 25"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Food Category *</label>
+            <select id="p-category" class="form-input">
+              <option value="vegetables">Vegetables</option><option value="dairy">Dairy</option>
+              <option value="meat">Meat</option><option value="grains">Grains</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Staff Experience</label>
+            <select id="p-exp" class="form-input">
+              <option value="">Unknown</option><option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option><option value="expert">Expert</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="submitPrediction()" id="pred-btn">🔮 Predict Waste</button>
+      </div>
+      <div>
+        <div class="card" id="pred-result-card" style="display:none">
+          <div class="card-title">✅ Prediction Result</div>
+          <div style="text-align:center;padding:20px 0">
+            <div style="font-size:48px;font-weight:800;color:#7c3aed" id="pred-value">—</div>
+            <div style="font-size:13px;color:#6b7280;margin-top:4px">kilograms of food waste</div>
+          </div>
+          <div style="border-top:1px solid #f3f4f6;padding-top:10px;margin-top:4px">
+            <div class="rp-row"><span class="rp-label">Model status</span><span class="rp-val" id="pred-model-status">—</span></div>
+            <div class="rp-row"><span class="rp-label">Category used</span><span class="rp-val" id="pred-category-used">—</span></div>
+          </div>
+          <div class="alert alert-warn" style="margin-top:10px" id="pred-disclaimer"></div>
+        </div>
+        <div class="card" id="pred-empty-card">
+          <div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><p>Fill the form and click Predict Waste</p></div>
+        </div>
+        <div class="card" style="background:#f5f3ff;border-color:#c4b5fd;margin-top:12px">
+          <div class="card-title" style="color:#7c3aed">ℹ️ About this model</div>
+          <p class="text-sm" style="color:#6d28d9;line-height:1.6">RandomForestRegressor · 728 train rows · 183 val rows<br>MAE: 4.79 kg · RMSE: 7.03 kg · R²: 0.9036<br><em style="font-size:11px">Prototype — trained on synthetic/competition data.</em></p>
+        </div>
+      </div>
+    </div>
+    <!-- History -->
+    <div class="card" id="pred-history-card" style="margin-top:12px;display:none">
+      <div class="card-title">📋 Prediction History (this session)</div>
+      <div class="table-wrap"><table><thead><tr><th>Time</th><th>Meals</th><th>Category</th><th>Experience</th><th>Predicted (kg)</th></tr></thead><tbody id="pred-history-body"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- Page: Food Donations -->
+  <div id="page-donations" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header">
+      <div><div class="section-title">Food Donations</div><div class="section-sub">Manage surplus food registrations</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openDonationModal()">+ Register Food</button>
+    </div>
+    <div class="filter-bar">
+      <input type="text" class="form-input" style="width:180px" placeholder="Search donor…" id="don-search" oninput="loadDonations()"/>
+      <select class="form-input" style="width:160px" id="don-status-filter" onchange="loadDonations()">
+        <option value="">All statuses</option>
+        <option value="available">Available</option>
+        <option value="partially_allocated">Partially Allocated</option>
+        <option value="fully_allocated">Fully Allocated</option>
+        <option value="expired">Expired</option>
+        <option value="withdrawn">Withdrawn</option>
+      </select>
+      <span class="text-muted" id="don-count"></span>
+    </div>
+    <div id="don-alert"></div>
+    <div id="don-content"><div class="text-muted"><span class="spinner"></span> Loading…</div></div>
+    <div class="pagination" id="don-pagination"></div>
+  </div>
+
+  <!-- Page: Recipients -->
+  <div id="page-recipients" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header">
+      <div><div class="section-title">Recipients</div><div class="section-sub">Organizations receiving redistributed food</div></div>
+      <button class="btn btn-primary btn-sm" onclick="openRecipientModal()">+ Add Recipient</button>
+    </div>
+    <div class="filter-bar">
+      <input type="text" class="form-input" style="width:180px" placeholder="Filter by location…" id="rec-search" oninput="loadRecipients()"/>
+      <div class="tabs" style="margin:0">
+        <div class="tab active" onclick="setRecFilter('all',this)">All</div>
+        <div class="tab" onclick="setRecFilter('active',this)">Active</div>
+        <div class="tab" onclick="setRecFilter('inactive',this)">Inactive</div>
+      </div>
+      <span class="text-muted" id="rec-count"></span>
+    </div>
+    <div id="rec-alert"></div>
+    <div id="rec-content"><div class="text-muted"><span class="spinner"></span> Loading…</div></div>
+    <div class="pagination" id="rec-pagination"></div>
+  </div>
+
+  <!-- Page: Matching -->
+  <div id="page-matching" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header">
+      <div><div class="section-title">Matching &amp; Redistribution</div><div class="section-sub">Run the AI agent to match surplus food with recipients</div></div>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="card">
+          <div class="card-title">🤝 Select Food Donation</div>
+          <div id="match-select-area"><div class="text-muted"><span class="spinner"></span> Loading available donations…</div></div>
+        </div>
+        <div id="match-plans-area"></div>
+      </div>
+      <div id="match-result-area">
+        <div class="card">
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <p>Select a donation and run the matching agent</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Page: Analytics -->
+  <div id="page-analytics" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header">
+      <div><div class="section-title">Analytics</div><div class="section-sub">Food waste trends, donation volumes, and redistribution outcomes</div></div>
+    </div>
+    <div class="grid-4" style="margin-bottom:14px" id="analytics-metrics"></div>
+    <div class="grid-2" style="margin-bottom:14px">
+      <div class="card">
+        <div class="card-title">📊 Model Performance</div>
+        <div id="analytics-model-chart"><div class="text-muted">Loading…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">🥗 Donation Volume by Category (kg)</div>
+        <div id="analytics-cat-chart"><div class="text-muted">Loading…</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">📦 Donations by Status (Live data)</div>
+      <div id="analytics-status-chart"><div class="text-muted">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- Page: Library -->
+  <div id="page-library" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header"><div class="section-title">Library</div></div>
+    <div class="card">
+      <div class="card-title">📚 Resources &amp; Documentation</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:6px">
+        <a href="/docs" target="_blank" class="btn btn-secondary btn-sm">API Docs (Swagger)</a>
+        <a href="/redoc" target="_blank" class="btn btn-secondary btn-sm">ReDoc</a>
+        <a href="https://sdgs.un.org/goals/goal12" target="_blank" class="btn btn-secondary btn-sm">UN SDG 12</a>
+        <a href="https://sdgs.un.org/goals/goal2" target="_blank" class="btn btn-secondary btn-sm">UN SDG 2</a>
+        <a href="https://www.kaggle.com" target="_blank" class="btn btn-secondary btn-sm">Kaggle Dataset</a>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔑 API Endpoints Reference</div>
+      <table><thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-green">GET</span></td><td>/api/health</td><td>Backend health &amp; model readiness</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td>/api/dataset/info</td><td>Dataset info &amp; columns</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/predict</td><td>Predict food waste (kg)</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/model/train</td><td>Train the ML model</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td>/api/model/metrics</td><td>Validation metrics</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/food</td><td>Register surplus food</td></tr>
+        <tr><td><span class="badge badge-green">GET</span></td><td>/api/food</td><td>List food donations</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/recipients</td><td>Create recipient</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/agent/plan/{id}</td><td>Run matching agent</td></tr>
+        <tr><td><span class="badge badge-purple">POST</span></td><td>/api/agent/plan/{id}/approve</td><td>Approve plan (human)</td></tr>
+      </tbody></table>
+    </div>
+  </div>
+
+  <!-- Page: Settings -->
+  <div id="page-settings" class="page" style="overflow-y:auto;height:calc(100vh - 57px)">
+    <div class="section-header"><div class="section-title">Settings</div></div>
+    <div class="card">
+      <div class="card-title">🌿 About RePlate Intelligence</div>
+      <p class="text-sm" style="color:#374151;line-height:1.7">
+        <strong>RePlate Intelligence</strong> is an AI-powered food waste management platform.<br>
+        <em>Predict Waste. Redistribute Food. Create Impact.</em><br><br>
+        Aligned with UN SDG 12 (Responsible Consumption) and SDG 2 (Zero Hunger).<br>
+        Backend: FastAPI + RandomForestRegressor · Database: SQLite · Frontend: Vanilla JS
+      </p>
+    </div>
+    <div class="card">
+      <div class="card-title">⚙️ System Configuration</div>
+      <div id="settings-status"><div class="text-muted">Loading…</div></div>
+    </div>
+    <div class="card" style="background:#fef3c7;border-color:#fde68a">
+      <div class="card-title" style="color:#92400e">⚠️ Prototype Disclaimer</div>
+      <p class="text-sm" style="color:#78350f;line-height:1.6">
+        This application is trained on synthetic/competition data from Kaggle. Predictions are indicative estimates only.
+        All matching plans require explicit human approval. Do not use predictions as the sole basis for food-safety decisions.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ RIGHT SIDEBAR ════════════════════════════ -->
+<div id="right-panel">
+  <div class="rp-section">
+    <div class="rp-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+      RePlate AI Model
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:#f5f3ff;display:flex;align-items:center;justify-content:center;font-size:16px">🤖</div>
+      <div><div style="font-size:12px;font-weight:600;color:#111827">RandomForestRegressor</div><div class="text-muted">Prototype · Synthetic dataset</div></div>
+    </div>
+    <div class="rp-row"><span class="rp-label">MAE</span><span class="rp-val" id="rp-mae">4.794 kg</span></div>
+    <div class="rp-row"><span class="rp-label">RMSE</span><span class="rp-val" id="rp-rmse">7.027 kg</span></div>
+    <div class="rp-row"><span class="rp-label">R²</span><span class="rp-val" id="rp-r2">0.9036</span></div>
+    <div style="font-size:10px;color:#9ca3af;margin-top:4px">Validation metrics (20% split)</div>
+  </div>
+
+  <div class="rp-section">
+    <div class="rp-title">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+      Dataset
+    </div>
+    <div class="rp-row"><span class="rp-label">Train rows</span><span class="rp-val" id="rp-train">728</span></div>
+    <div class="rp-row"><span class="rp-label">Val rows</span><span class="rp-val" id="rp-val">183</span></div>
+    <div class="rp-row"><span class="rp-label">Features</span><span class="rp-val">9 columns</span></div>
+    <div class="rp-row"><span class="rp-label">Target</span><span class="rp-val" style="font-family:monospace;font-size:11px">food_waste_kg</span></div>
+    <div class="rp-row"><span class="rp-label">Trained at</span><span class="rp-val text-muted" id="rp-trained-at">—</span></div>
+  </div>
+
+  <div class="rp-section">
+    <div class="rp-title">🔴 System Status</div>
+    <div class="status-row"><span class="dot dot-amber" id="s-backend-dot"></span><span id="s-backend">Backend…</span></div>
+    <div class="status-row"><span class="dot dot-amber" id="s-model-dot"></span><span id="s-model">Model…</span></div>
+    <div class="status-row"><span class="dot dot-amber" id="s-dataset-dot"></span><span id="s-dataset">Dataset…</span></div>
+    <div class="status-row"><span class="dot dot-amber" id="s-agent-dot"></span><span id="s-agent">Agent…</span></div>
+    <div class="status-row"><span class="dot dot-amber" id="s-llm-dot"></span><span id="s-llm">LLM…</span></div>
+    <div id="s-fallback-note" style="display:none" class="text-muted mt-1" style="font-size:10px">ℹ️ Deterministic fallback — set OPENAI_API_KEY for LLM explanations.</div>
+  </div>
+
+  <div class="rp-section">
+    <div class="rp-title">💡 Quick Insights</div>
+    <div id="rp-insights"><div class="text-muted">Loading data…</div></div>
+  </div>
+
+  <div class="rp-section">
+    <div class="rp-title">🔗 Resources</div>
+    <div>
+      <a href="/docs" target="_blank" class="resource-pill">📖 API Docs</a>
+      <a href="https://sdgs.un.org/goals/goal12" target="_blank" class="resource-pill">🌍 SDG 12</a>
+      <a href="https://sdgs.un.org/goals/goal2" target="_blank" class="resource-pill">🍽 SDG 2</a>
+      <a href="https://www.kaggle.com" target="_blank" class="resource-pill">📊 Kaggle</a>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- Donation Modal -->
+<div id="don-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Register Surplus Food</div>
+      <button class="close-btn" onclick="closeDonationModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="don-modal-alert"></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Donor Name *</label><input type="text" id="dm-donor" class="form-input" placeholder="e.g. Hotel Grand"/></div>
+        <div class="form-group"><label class="form-label">Food Name *</label><input type="text" id="dm-food" class="form-input" placeholder="e.g. Mixed Salad"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category *</label>
+          <select id="dm-category" class="form-input"><option value="vegetables">Vegetables</option><option value="dairy">Dairy</option><option value="meat">Meat</option><option value="grains">Grains</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Quantity (kg) *</label><input type="number" id="dm-qty" class="form-input" value="10" min="0.1" step="0.1"/></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Prepared At *</label><input type="datetime-local" id="dm-prepared" class="form-input"/></div>
+        <div class="form-group"><label class="form-label">Expiry At *</label><input type="datetime-local" id="dm-expiry" class="form-input"/></div>
+      </div>
+      <div class="form-group"><label class="form-label">Pickup Location *</label><input type="text" id="dm-location" class="form-input" placeholder="e.g. Downtown, Demo City"/></div>
+      <div class="form-group"><label class="form-label">Storage Conditions</label><input type="text" id="dm-storage" class="form-input" placeholder="e.g. Refrigerated at 4°C"/></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDonationModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitDonation()" id="dm-submit-btn">Register Donation</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recipient Modal -->
+<div id="rec-modal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Add Recipient</div>
+      <button class="close-btn" onclick="closeRecipientModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="rec-modal-alert"></div>
+      <div class="form-group"><label class="form-label">Organization Name *</label><input type="text" id="rm-name" class="form-input" placeholder="e.g. City Food Bank"/></div>
+      <div class="form-group"><label class="form-label">Location *</label><input type="text" id="rm-location" class="form-input" placeholder="e.g. Downtown, City"/></div>
+      <div class="form-group"><label class="form-label">Accepted Food Categories *</label>
+        <div id="rm-cats" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
+          <button type="button" class="chip active" data-cat="vegetables" onclick="toggleCat(this)">Vegetables</button>
+          <button type="button" class="chip" data-cat="dairy" onclick="toggleCat(this)">Dairy</button>
+          <button type="button" class="chip" data-cat="meat" onclick="toggleCat(this)">Meat</button>
+          <button type="button" class="chip" data-cat="grains" onclick="toggleCat(this)">Grains</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Capacity (kg) *</label><input type="number" id="rm-capacity" class="form-input" value="100" min="1"/></div>
+        <div class="form-group"><label class="form-label">Contact Details</label><input type="text" id="rm-contact" class="form-input" placeholder="e.g. contact@org.example"/></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeRecipientModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitRecipient()" id="rm-submit-btn">Add Recipient</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════════════════════════════
+const API = '';  // same origin
+let currentPage = 'overview';
+let donPage = 1, recPage = 1, recFilter = 'all';
+let predHistory = [];
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function navTo(page) {
+  // Hide all pages
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+  const chatPage = document.getElementById('page-assistant');
+  chatPage.style.display = 'none';
+
+  // Remove active from nav items
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+  currentPage = page;
+  document.getElementById('topbar-title').textContent = {
+    overview: 'Overview', assistant: 'AI Assistant', predictions: 'Waste Predictions',
+    donations: 'Food Donations', recipients: 'Recipients', matching: 'Matching',
+    analytics: 'Analytics', library: 'Library', settings: 'Settings'
+  }[page] || page;
+
+  const navEl = document.getElementById('nav-' + page);
+  if (navEl) navEl.classList.add('active');
+
+  if (page === 'assistant') {
+    chatPage.style.display = 'flex';
+    chatPage.style.flexDirection = 'column';
+    chatPage.style.height = 'calc(100vh - 57px)';
+  } else {
+    const el = document.getElementById('page-' + page);
+    if (el) { el.classList.add('active'); el.style.display = 'block'; }
+  }
+
+  // Load page data
+  if (page === 'overview') loadOverview();
+  if (page === 'donations') { donPage = 1; loadDonations(); }
+  if (page === 'recipients') { recPage = 1; loadRecipients(); }
+  if (page === 'matching') loadMatchingPage();
+  if (page === 'analytics') loadAnalytics();
+  if (page === 'settings') loadSettings();
+
+  closeSidebar();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIDEBAR MOBILE
+// ═══════════════════════════════════════════════════════════════
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('sb-close').style.display = 'flex';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API HELPERS
+// ═══════════════════════════════════════════════════════════════
+async function apiFetch(path, options = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...options
+  });
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try { const d = await res.json(); msg = d.detail || JSON.stringify(d); } catch {}
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+}
+function isoNow(addHours = 0) {
+  const d = new Date(Date.now() + addHours * 3600000);
+  return d.toISOString().slice(0, 16);
+}
+
+function statusBadge(s) {
+  const map = { available: 'green', partially_allocated: 'amber', fully_allocated: 'purple', expired: 'red', withdrawn: 'gray', proposed: 'amber', approved: 'green', rejected: 'red', in_transit: 'blue', delivered: 'green', cancelled: 'gray' };
+  return `<span class="badge badge-${map[s]||'gray'}">${s.replace(/_/g,' ')}</span>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SYSTEM STATUS
+// ═══════════════════════════════════════════════════════════════
+async function pollStatus() {
+  try {
+    const h = await apiFetch('/api/health');
+    const el = document.getElementById('system-status');
+    el.className = 'status-badge status-online';
+    el.innerHTML = '<span class="dot dot-green"></span><span>AI System Online</span>';
+
+    setStatus('s-backend', h.status === 'ok', 'Backend connected');
+    setStatus('s-model', h.model_ready, 'Prediction service ' + (h.model_ready ? 'ready' : 'not trained'));
+    setStatus('s-dataset', true, 'Dataset loaded');
+    setStatus('s-agent', h.status === 'ok', 'AI assistant ready');
+    setStatus('s-llm', h.llm_enabled, h.llm_enabled ? 'LLM enabled' : 'Deterministic fallback');
+    if (!h.llm_enabled) document.getElementById('s-fallback-note').style.display = 'block';
+
+    if (h.model_ready) {
+      try {
+        const m = await apiFetch('/api/model/metrics');
+        document.getElementById('rp-mae').textContent = m.mae.toFixed(3) + ' kg';
+        document.getElementById('rp-rmse').textContent = m.rmse.toFixed(3) + ' kg';
+        document.getElementById('rp-r2').textContent = m.r2.toFixed(4);
+        document.getElementById('rp-train').textContent = m.train_rows;
+        document.getElementById('rp-val').textContent = m.val_rows;
+        if (m.trained_at) document.getElementById('rp-trained-at').textContent = fmtDate(m.trained_at);
+        document.getElementById('ov-r2').textContent = m.r2.toFixed(4);
+      } catch {}
+    }
+  } catch {
+    const el = document.getElementById('system-status');
+    el.className = 'status-badge status-offline';
+    el.innerHTML = '<span class="dot dot-red"></span><span>Backend Offline</span>';
+    ['backend','model','dataset','agent','llm'].forEach(k => setStatus('s-'+k, false, k.charAt(0).toUpperCase()+k.slice(1)+' unavailable'));
+  }
+}
+
+function setStatus(id, ok, label) {
+  const dot = document.getElementById(id + '-dot');
+  const txt = document.getElementById(id);
+  if (!dot || !txt) return;
+  dot.className = 'dot ' + (ok ? 'dot-green' : 'dot-red');
+  txt.className = ok ? 'status-green' : 'status-red';
+  txt.style.fontSize = '11px';
+  txt.textContent = label;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// OVERVIEW
+// ═══════════════════════════════════════════════════════════════
+async function loadOverview() {
+  try {
+    const [dons, recs] = await Promise.all([
+      apiFetch('/api/food?page_size=100'),
+      apiFetch('/api/recipients?page_size=100')
+    ]);
+    const available = dons.items.filter(d => d.status === 'available');
+    const availKg = available.reduce((s, d) => s + d.quantity_kg, 0);
+    document.getElementById('ov-donations').textContent = dons.total;
+    document.getElementById('ov-donations-sub').textContent = dons.items.reduce((s,d)=>s+d.quantity_kg,0).toFixed(1) + ' kg total';
+    document.getElementById('ov-available').textContent = availKg.toFixed(1) + ' kg';
+    document.getElementById('ov-available-sub').textContent = available.length + ' donations ready';
+    const activeRecs = recs.items.filter(r => r.is_active);
+    document.getElementById('ov-recipients').textContent = activeRecs.length;
+    document.getElementById('ov-recipients-sub').textContent = recs.total + ' total registered';
+
+    // Status chart
+    const statMap = {};
+    dons.items.forEach(d => { statMap[d.status] = (statMap[d.status]||0)+1; });
+    renderBarChart('status-chart', Object.entries(statMap).map(([k,v])=>({label:k.replace(/_/g,' '),value:v})));
+
+    // Trend (demo)
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    renderLineChart('trend-chart', days.map((d,i)=>({label:d,value:Math.round(30+Math.sin(i)*15+Math.random()*10)})));
+
+    // Table
+    const rows = dons.items.slice(0,8).map(d => `<tr>
+      <td style="font-weight:600">${escHtml(d.food_name)}</td>
+      <td>${escHtml(d.food_category)}</td>
+      <td>${d.quantity_kg.toFixed(1)}</td>
+      <td>${statusBadge(d.status)}</td>
+      <td style="color:#9ca3af">${escHtml(d.donor_name)}</td>
+    </tr>`).join('');
+    document.getElementById('ov-table').innerHTML = dons.items.length === 0
+      ? '<div class="empty-state"><p>No donations yet</p><small>Register surplus food to get started.</small></div>'
+      : `<div class="table-wrap"><table><thead><tr><th>Food Item</th><th>Category</th><th>Qty (kg)</th><th>Status</th><th>Donor</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+
+    // Right panel insights
+    document.getElementById('rp-insights').innerHTML = `
+      <div class="rp-row"><span class="rp-label">Total donations</span><span class="rp-val">${dons.total}</span></div>
+      <div class="rp-row"><span class="rp-label">Available surplus</span><span class="rp-val">${availKg.toFixed(1)} kg</span></div>
+      <div class="rp-row"><span class="rp-label">Active recipients</span><span class="rp-val">${activeRecs.length}</span></div>
+    `;
+  } catch (e) {
+    document.getElementById('ov-table').innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHARTS (pure SVG/DOM, no library)
+// ═══════════════════════════════════════════════════════════════
+function renderBarChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="text-muted">No data</div>'; return; }
+  const max = Math.max(...data.map(d=>d.value)) || 1;
+  const colors = ['#7c3aed','#16a34a','#d97706','#2563eb','#dc2626','#9ca3af'];
+  el.innerHTML = `<div class="chart-bar-wrap">${data.map((d,i)=>`
+    <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+      <div class="chart-bar" style="height:${Math.max(6,d.value/max*80)}px;background:${colors[i%colors.length]}" title="${d.label}: ${d.value}"></div>
+      <div class="chart-bar-label">${escHtml(d.label)}</div>
+    </div>`).join('')}
+  </div>`;
+}
+
+function renderLineChart(containerId, data) {
+  const el = document.getElementById(containerId);
+  if (!data.length) { el.innerHTML = '<div class="text-muted">No data</div>'; return; }
+  const max = Math.max(...data.map(d=>d.value)) || 1;
+  const w = 300, h = 90, pad = 10;
+  const pts = data.map((d,i) => {
+    const x = pad + (i / (data.length-1)) * (w - 2*pad);
+    const y = h - pad - (d.value / max) * (h - 2*pad);
+    return `${x},${y}`;
+  }).join(' ');
+  const dots = data.map((d,i) => {
+    const x = pad + (i / (data.length-1)) * (w - 2*pad);
+    const y = h - pad - (d.value / max) * (h - 2*pad);
+    return `<circle cx="${x}" cy="${y}" r="3" fill="#7c3aed"/>`;
+  }).join('');
+  el.innerHTML = `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:90px">
+    <polyline points="${pts}" fill="none" stroke="#7c3aed" stroke-width="2" stroke-linejoin="round"/>
+    ${dots}
+  </svg>
+  <div class="flex" style="justify-content:space-between;margin-top:2px">
+    ${data.map(d=>`<span style="font-size:9px;color:#9ca3af">${escHtml(d.label)}</span>`).join('')}
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PREDICTIONS
+// ═══════════════════════════════════════════════════════════════
+async function submitPrediction() {
+  const btn = document.getElementById('pred-btn');
+  const alertEl = document.getElementById('pred-alert');
+  alertEl.innerHTML = '';
+
+  const meals = parseInt(document.getElementById('p-meals').value);
+  const staff = parseInt(document.getElementById('p-staff').value);
+  const humidity = parseFloat(document.getElementById('p-humidity').value);
+  if (!meals || meals < 1) { alertEl.innerHTML = '<div class="alert alert-error">Meals served must be at least 1</div>'; return; }
+  if (!staff || staff < 1) { alertEl.innerHTML = '<div class="alert alert-error">Kitchen staff must be at least 1</div>'; return; }
+  if (humidity < 0 || humidity > 100) { alertEl.innerHTML = '<div class="alert alert-error">Humidity must be 0–100</div>'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Predicting…';
+  document.getElementById('pred-result-card').style.display = 'none';
+  document.getElementById('pred-empty-card').style.display = 'block';
+
+  try {
+    const payload = {
+      meals_served: meals,
+      kitchen_staff: staff,
+      temperature_C: parseFloat(document.getElementById('p-temp').value) || 22,
+      humidity_percent: humidity,
+      day_of_week: parseInt(document.getElementById('p-day').value),
+      special_event: parseInt(document.getElementById('p-event').value),
+      past_waste_kg: parseFloat(document.getElementById('p-past').value) || 25,
+      waste_category: document.getElementById('p-category').value,
+      staff_experience: document.getElementById('p-exp').value || null
+    };
+    const res = await apiFetch('/api/predict', { method: 'POST', body: JSON.stringify(payload) });
+    document.getElementById('pred-value').textContent = res.predicted_food_waste_kg.toFixed(2);
+    document.getElementById('pred-model-status').textContent = res.model_status;
+    document.getElementById('pred-category-used').textContent = payload.waste_category;
+    document.getElementById('pred-disclaimer').textContent = '⚠️ ' + res.disclaimer;
+    document.getElementById('pred-result-card').style.display = 'block';
+    document.getElementById('pred-empty-card').style.display = 'none';
+
+    // History
+    predHistory.unshift({ time: new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}), meals: payload.meals_served, category: payload.waste_category, exp: payload.staff_experience || 'unknown', result: res.predicted_food_waste_kg.toFixed(2) });
+    if (predHistory.length > 10) predHistory.pop();
+    document.getElementById('pred-history-card').style.display = 'block';
+    document.getElementById('pred-history-body').innerHTML = predHistory.map(h => `<tr><td>${h.time}</td><td>${h.meals}</td><td>${h.category}</td><td>${h.exp}</td><td style="font-weight:700;color:#7c3aed">${h.result}</td></tr>`).join('');
+  } catch (e) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '🔮 Predict Waste';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DONATIONS
+// ═══════════════════════════════════════════════════════════════
+async function loadDonations() {
+  const search = document.getElementById('don-search').value;
+  const status = document.getElementById('don-status-filter').value;
+  const container = document.getElementById('don-content');
+  container.innerHTML = '<div class="text-muted"><span class="spinner"></span> Loading…</div>';
+  try {
+    let url = `/api/food?page=${donPage}&page_size=20`;
+    if (search) url += `&donor_name=${encodeURIComponent(search)}`;
+    if (status) url += `&status=${encodeURIComponent(status)}`;
+    const data = await apiFetch(url);
+    document.getElementById('don-count').textContent = `${data.total} total`;
+    if (data.items.length === 0) {
+      container.innerHTML = '<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10H3"/><path d="M21 6H3"/><path d="M21 14H3"/><path d="M21 18H3"/></svg><p>No food donations found</p><small>Register surplus food to get started.</small></div>';
+    } else {
+      const rows = data.items.map(d => `<tr>
+        <td style="font-family:monospace;font-size:11px;color:#9ca3af">#${d.id}</td>
+        <td style="font-weight:600">${escHtml(d.food_name)}</td>
+        <td class="capitalize">${escHtml(d.food_category)}</td>
+        <td>${d.quantity_kg.toFixed(1)}</td>
+        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis">${escHtml(d.donor_name)}</td>
+        <td>${fmtDate(d.expiry_at)}</td>
+        <td>${statusBadge(d.status)}</td>
+        <td>
+          <button class="btn btn-danger btn-sm" onclick="deleteDonation(${d.id})" title="Delete">🗑</button>
+        </td>
+      </tr>`).join('');
+      container.innerHTML = `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Food</th><th>Category</th><th>Qty (kg)</th><th>Donor</th><th>Expiry</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+    renderPagination('don-pagination', donPage, Math.ceil(data.total/20), (p) => { donPage = p; loadDonations(); });
+  } catch (e) {
+    container.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function deleteDonation(id) {
+  if (!confirm('Delete this donation record?')) return;
+  try {
+    await apiFetch(`/api/food/${id}`, { method: 'DELETE' });
+    loadDonations();
+  } catch (e) {
+    document.getElementById('don-alert').innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+function openDonationModal() {
+  document.getElementById('dm-prepared').value = isoNow(-1);
+  document.getElementById('dm-expiry').value = isoNow(23);
+  document.getElementById('don-modal-alert').innerHTML = '';
+  document.getElementById('don-modal').classList.add('open');
+}
+function closeDonationModal() { document.getElementById('don-modal').classList.remove('open'); }
+
+async function submitDonation() {
+  const alert = document.getElementById('don-modal-alert');
+  alert.innerHTML = '';
+  const donor = document.getElementById('dm-donor').value.trim();
+  const food = document.getElementById('dm-food').value.trim();
+  const location = document.getElementById('dm-location').value.trim();
+  const qty = parseFloat(document.getElementById('dm-qty').value);
+  const prepared = document.getElementById('dm-prepared').value;
+  const expiry = document.getElementById('dm-expiry').value;
+  if (!donor || !food || !location) { alert.innerHTML = '<div class="alert alert-error">Donor name, food name, and pickup location are required.</div>'; return; }
+  if (qty <= 0) { alert.innerHTML = '<div class="alert alert-error">Quantity must be positive.</div>'; return; }
+  if (new Date(expiry) <= new Date(prepared)) { alert.innerHTML = '<div class="alert alert-error">Expiry must be after preparation time.</div>'; return; }
+  const btn = document.getElementById('dm-submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await apiFetch('/api/food', { method: 'POST', body: JSON.stringify({
+      donor_name: donor, food_name: food, food_category: document.getElementById('dm-category').value,
+      quantity_kg: qty, prepared_at: new Date(prepared).toISOString(), expiry_at: new Date(expiry).toISOString(),
+      storage_conditions: document.getElementById('dm-storage').value || null,
+      pickup_location: location
+    })});
+    closeDonationModal();
+    loadDonations();
+  } catch (e) {
+    alert.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Register Donation';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RECIPIENTS
+// ═══════════════════════════════════════════════════════════════
+function setRecFilter(f, el) {
+  recFilter = f; recPage = 1;
+  document.querySelectorAll('#page-recipients .tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  loadRecipients();
+}
+
+async function loadRecipients() {
+  const search = document.getElementById('rec-search').value;
+  const container = document.getElementById('rec-content');
+  container.innerHTML = '<div class="text-muted"><span class="spinner"></span> Loading…</div>';
+  try {
+    let url = `/api/recipients?page=${recPage}&page_size=20`;
+    if (search) url += `&location=${encodeURIComponent(search)}`;
+    if (recFilter === 'active') url += '&is_active=true';
+    if (recFilter === 'inactive') url += '&is_active=false';
+    const data = await apiFetch(url);
+    document.getElementById('rec-count').textContent = `${data.total} total`;
+    if (data.items.length === 0) {
+      container.innerHTML = '<div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>No recipients found</p></div>';
+    } else {
+      const rows = data.items.map(r => `<tr>
+        <td style="font-family:monospace;font-size:11px;color:#9ca3af">#${r.id}</td>
+        <td style="font-weight:600">${escHtml(r.organization_name)}<br><span class="text-muted">${escHtml(r.contact_details||'')}</span></td>
+        <td>${escHtml(r.location)}</td>
+        <td>${(r.accepted_food_categories||[]).map(c=>`<span class="badge badge-gray">${c}</span>`).join(' ')}</td>
+        <td>${r.capacity_kg.toLocaleString()}</td>
+        <td><span class="badge ${r.is_active?'badge-green':'badge-gray'}">${r.is_active?'Active':'Inactive'}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="toggleRecipient(${r.id},${r.is_active})">${r.is_active?'Deactivate':'Activate'}</button>
+        </td>
+      </tr>`).join('');
+      container.innerHTML = `<div class="table-wrap"><table><thead><tr><th>ID</th><th>Organization</th><th>Location</th><th>Categories</th><th>Capacity (kg)</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    }
+    renderPagination('rec-pagination', recPage, Math.ceil(data.total/20), (p) => { recPage = p; loadRecipients(); });
+  } catch (e) {
+    container.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+async function toggleRecipient(id, isActive) {
+  try {
+    await apiFetch(`/api/recipients/${id}`, { method: 'PATCH', body: JSON.stringify({ is_active: !isActive }) });
+    loadRecipients();
+  } catch (e) {
+    document.getElementById('rec-alert').innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+function toggleCat(el) { el.classList.toggle('active'); }
+
+function openRecipientModal() {
+  document.getElementById('rec-modal-alert').innerHTML = '';
+  document.getElementById('rm-name').value = '';
+  document.getElementById('rm-location').value = '';
+  document.getElementById('rm-capacity').value = '100';
+  document.getElementById('rm-contact').value = '';
+  document.querySelectorAll('#rm-cats .chip').forEach(c => c.classList.toggle('active', c.dataset.cat === 'vegetables'));
+  document.getElementById('rec-modal').classList.add('open');
+}
+function closeRecipientModal() { document.getElementById('rec-modal').classList.remove('open'); }
+
+async function submitRecipient() {
+  const alert = document.getElementById('rec-modal-alert');
+  alert.innerHTML = '';
+  const name = document.getElementById('rm-name').value.trim();
+  const location = document.getElementById('rm-location').value.trim();
+  const capacity = parseFloat(document.getElementById('rm-capacity').value);
+  const cats = [...document.querySelectorAll('#rm-cats .chip.active')].map(c => c.dataset.cat);
+  if (!name || !location) { alert.innerHTML = '<div class="alert alert-error">Name and location are required.</div>'; return; }
+  if (cats.length === 0) { alert.innerHTML = '<div class="alert alert-error">Select at least one food category.</div>'; return; }
+  if (capacity <= 0) { alert.innerHTML = '<div class="alert alert-error">Capacity must be positive.</div>'; return; }
+  const btn = document.getElementById('rm-submit-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    await apiFetch('/api/recipients', { method: 'POST', body: JSON.stringify({
+      organization_name: name, location, accepted_food_categories: cats, capacity_kg: capacity,
+      contact_details: document.getElementById('rm-contact').value || null, is_active: true
+    })});
+    closeRecipientModal();
+    loadRecipients();
+  } catch (e) {
+    alert.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Add Recipient';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MATCHING
+// ═══════════════════════════════════════════════════════════════
+let activePlans = [];
+
+async function loadMatchingPage() {
+  const area = document.getElementById('match-select-area');
+  try {
+    const data = await apiFetch('/api/food?status=available&page_size=50');
+    if (data.items.length === 0) {
+      area.innerHTML = '<div class="empty-state"><p>No available food donations</p><small>Register available food donations first.</small></div>';
+      return;
+    }
+    area.innerHTML = `
+      <select class="form-input" id="match-food-select" style="margin-bottom:8px">
+        ${data.items.map(d => `<option value="${d.id}">#${d.id} — ${escHtml(d.food_name)} (${d.quantity_kg} kg, ${d.food_category})</option>`).join('')}
+      </select>
+      <div id="match-food-detail" class="card" style="background:#f9fafb;padding:10px;margin-bottom:8px;font-size:12px"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="runMatchingAgent()" id="match-run-btn">▶ Run Matching Agent</button>
+      <div id="match-run-alert" style="margin-top:8px"></div>`;
+    document.getElementById('match-food-select').addEventListener('change', () => updateMatchDetail(data.items));
+    updateMatchDetail(data.items);
+  } catch (e) {
+    area.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+function updateMatchDetail(items) {
+  const sel = document.getElementById('match-food-select');
+  if (!sel) return;
+  const id = parseInt(sel.value);
+  const d = items.find(x => x.id === id);
+  const el = document.getElementById('match-food-detail');
+  if (!d || !el) return;
+  el.innerHTML = `<div class="rp-row"><span class="rp-label">Donor</span><span class="rp-val">${escHtml(d.donor_name)}</span></div>
+    <div class="rp-row"><span class="rp-label">Quantity</span><span class="rp-val">${d.quantity_kg} kg</span></div>
+    <div class="rp-row"><span class="rp-label">Category</span><span class="rp-val capitalize">${d.food_category}</span></div>
+    <div class="rp-row"><span class="rp-label">Expiry</span><span class="rp-val">${fmtDateTime(d.expiry_at)}</span></div>
+    <div class="rp-row"><span class="rp-label">Location</span><span class="rp-val">${escHtml(d.pickup_location)}</span></div>`;
+}
+
+async function runMatchingAgent() {
+  const sel = document.getElementById('match-food-select');
+  if (!sel) return;
+  const id = parseInt(sel.value);
+  const btn = document.getElementById('match-run-btn');
+  const alertEl = document.getElementById('match-run-alert');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Running agent…';
+  alertEl.innerHTML = '';
+  try {
+    const res = await apiFetch(`/api/agent/plan/${id}`, { method: 'POST' });
+    renderMatchResult(res);
+    if (res.proposed_plan) {
+      activePlans = activePlans.filter(p => p.id !== res.proposed_plan.id);
+      activePlans.unshift(res.proposed_plan);
+      renderPlans();
+    }
+  } catch (e) {
+    alertEl.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  } finally {
+    btn.disabled = false; btn.innerHTML = '▶ Run Matching Agent';
+  }
+}
+
+function renderMatchResult(res) {
+  const area = document.getElementById('match-result-area');
+  const colors = ['#dcfce7','#fef3c7','#f3f4f6'];
+  const ranks = res.ranked_recipients.map((r, i) => `
+    <div style="padding:10px;border-radius:8px;background:${colors[Math.min(i,2)]};margin-bottom:6px;border:1px solid #e5e7eb">
+      <div class="flex justify-between items-center">
+        <div style="font-size:12px;font-weight:600">${i===0?'★ ':''} ${escHtml(r.recipient.organization_name)}</div>
+        <div style="font-size:14px;font-weight:700;color:#7c3aed">${r.score.toFixed(0)}<span style="font-size:10px;color:#9ca3af">/100</span></div>
+      </div>
+      <div style="font-size:11px;color:#6b7280;margin-top:2px">${escHtml(r.recipient.location)}</div>
+      <div style="font-size:11px;color:#374151;margin-top:4px">${r.reasons.slice(0,2).map(x=>`• ${escHtml(x)}`).join('<br>')}</div>
+      <div style="font-size:11px;color:#9ca3af;margin-top:2px">Available capacity: ${r.available_capacity_kg.toFixed(1)} kg</div>
+    </div>`).join('');
+
+  area.innerHTML = `
+    <div class="card" style="background:#f5f3ff;border-color:#c4b5fd;margin-bottom:10px">
+      <div class="card-title" style="color:#7c3aed">🤖 Agent Explanation ${res.fallback_mode ? '<span class="badge badge-amber">Deterministic</span>' : ''}</div>
+      <p style="font-size:12px;color:#4c1d95;line-height:1.6">${escHtml(res.explanation)}</p>
+      ${res.warnings.map(w=>`<div class="alert alert-warn" style="margin-top:6px">⚠️ ${escHtml(w)}</div>`).join('')}
+    </div>
+    <div class="card">
+      <div class="card-title">Ranked Recipients (${res.ranked_recipients.length})</div>
+      ${res.ranked_recipients.length === 0 ? '<div class="empty-state"><p>No eligible recipients found</p><small>Check recipients accept the food category and have capacity.</small></div>' : ranks}
+    </div>`;
+}
+
+function renderPlans() {
+  const area = document.getElementById('match-plans-area');
+  if (activePlans.length === 0) { area.innerHTML = ''; return; }
+  const cards = activePlans.map(p => `
+    <div class="card" style="border-left:4px solid #7c3aed;margin-bottom:8px">
+      <div class="flex justify-between items-center">
+        <div style="font-size:12px;font-weight:600">Plan #${p.id}</div>
+        ${statusBadge(p.status)}
+      </div>
+      <div style="font-size:11px;color:#6b7280;margin:4px 0">${p.proposed_quantity_kg.toFixed(1)} kg · Score: ${p.matching_score.toFixed(0)}/100</div>
+      ${p.match_reason ? `<div style="font-size:11px;color:#374151;margin-bottom:6px">${escHtml(p.match_reason.slice(0,150))}</div>` : ''}
+      ${p.status === 'proposed' ? `
+        <div class="flex gap-2">
+          <button class="btn btn-primary btn-sm" style="background:#16a34a;flex:1" onclick="approvePlan(${p.id})">✓ Approve</button>
+          <button class="btn btn-danger btn-sm" style="flex:1" onclick="rejectPlan(${p.id})">✕ Reject</button>
+        </div>
+        <div style="font-size:10px;color:#d97706;margin-top:4px">⚠️ Human approval required — NGO acceptance is NOT automatically confirmed.</div>` : ''}
+    </div>`).join('');
+  area.innerHTML = `<div class="card"><div class="card-title">Donation Plans</div>${cards}</div>`;
+}
+
+async function approvePlan(id) {
+  try {
+    const updated = await apiFetch(`/api/agent/plan/${id}/approve`, { method: 'POST' });
+    activePlans = activePlans.map(p => p.id === id ? updated : p);
+    renderPlans();
+  } catch (e) { alert(e.message); }
+}
+async function rejectPlan(id) {
+  try {
+    const updated = await apiFetch(`/api/agent/plan/${id}/reject`, { method: 'POST' });
+    activePlans = activePlans.map(p => p.id === id ? updated : p);
+    renderPlans();
+  } catch (e) { alert(e.message); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════════════════════════
+async function loadAnalytics() {
+  try {
+    const [dons, recs, metrics] = await Promise.all([
+      apiFetch('/api/food?page_size=100'),
+      apiFetch('/api/recipients?page_size=100'),
+      apiFetch('/api/model/metrics').catch(()=>null)
+    ]);
+    const totalKg = dons.items.reduce((s,d)=>s+d.quantity_kg, 0);
+    const availKg = dons.items.filter(d=>d.status==='available').reduce((s,d)=>s+d.quantity_kg, 0);
+    document.getElementById('analytics-metrics').innerHTML = `
+      <div class="metric-card"><div class="metric-label">Total Donations</div><div class="metric-value">${dons.total}</div></div>
+      <div class="metric-card"><div class="metric-label">Total Volume</div><div class="metric-value">${totalKg.toFixed(0)}</div><div class="metric-sub">kg</div></div>
+      <div class="metric-card"><div class="metric-label">Available</div><div class="metric-value">${availKg.toFixed(0)}</div><div class="metric-sub">kg surplus</div></div>
+      <div class="metric-card"><div class="metric-label">Active Recipients</div><div class="metric-value">${recs.items.filter(r=>r.is_active).length}</div></div>`;
+
+    if (metrics) {
+      renderBarChart('analytics-model-chart', [
+        { label: 'MAE (kg)', value: metrics.mae },
+        { label: 'RMSE (kg)', value: metrics.rmse },
+        { label: 'R² ×10', value: metrics.r2 * 10 }
+      ]);
+    }
+
+    // Category chart
+    const catMap = {};
+    dons.items.forEach(d => { catMap[d.food_category] = (catMap[d.food_category]||0) + d.quantity_kg; });
+    renderBarChart('analytics-cat-chart', Object.entries(catMap).map(([k,v])=>({ label: k, value: Math.round(v*10)/10 })));
+
+    // Status chart
+    const statMap = {};
+    dons.items.forEach(d => { statMap[d.status] = (statMap[d.status]||0)+1; });
+    renderBarChart('analytics-status-chart', Object.entries(statMap).map(([k,v])=>({ label: k.replace(/_/g,' '), value: v })));
+  } catch (e) {
+    document.getElementById('analytics-metrics').innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════════════════════════
+async function loadSettings() {
+  const el = document.getElementById('settings-status');
+  try {
+    const [h, m] = await Promise.all([apiFetch('/api/health'), apiFetch('/api/model/metrics').catch(()=>null)]);
+    el.innerHTML = `
+      <div class="rp-row"><span class="rp-label">Backend status</span><span class="rp-val ${h.status==='ok'?'status-green':'status-red'}">${h.status==='ok'?'✅ Online':'❌ Offline'}</span></div>
+      <div class="rp-row"><span class="rp-label">Version</span><span class="rp-val">${h.version}</span></div>
+      <div class="rp-row"><span class="rp-label">Model ready</span><span class="rp-val">${h.model_ready?'✅ Yes':'⚠️ Not trained'}</span></div>
+      <div class="rp-row"><span class="rp-label">LLM integration</span><span class="rp-val">${h.llm_enabled?'✅ Enabled':'⚠️ Deterministic fallback'}</span></div>
+      ${m ? `
+      <div class="divider"></div>
+      <div style="font-size:12px;font-weight:600;margin-bottom:6px">ML Model</div>
+      <div class="rp-row"><span class="rp-label">Algorithm</span><span class="rp-val">RandomForestRegressor</span></div>
+      <div class="rp-row"><span class="rp-label">MAE</span><span class="rp-val">${m.mae.toFixed(3)} kg</span></div>
+      <div class="rp-row"><span class="rp-label">RMSE</span><span class="rp-val">${m.rmse.toFixed(3)} kg</span></div>
+      <div class="rp-row"><span class="rp-label">R²</span><span class="rp-val">${m.r2.toFixed(4)}</span></div>
+      <div class="rp-row"><span class="rp-label">Trained at</span><span class="rp-val">${fmtDateTime(m.trained_at)}</span></div>` : ''}`;
+  } catch (e) {
+    el.innerHTML = `<div class="alert alert-error">⚠️ ${escHtml(e.message)}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════════════
+document.getElementById('welcome-time').textContent = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+
+function startNewChat() {
+  const msgs = document.getElementById('chat-messages');
+  msgs.innerHTML = `<div class="msg-row">
+    <div class="msg-avatar ai">🤖</div>
+    <div>
+      <div class="fast-check-badge">⚡ Welcome</div>
+      <div class="msg-bubble ai">
+        <strong>RePlate Intelligence AI Assistant</strong><br><br>
+        New conversation started. I can help with waste predictions, donation matching, system status, and model information.<br><br>
+        <em style="color:#9ca3af;font-size:11px">Deterministic fallback active. Set OPENAI_API_KEY for LLM responses.</em>
+      </div>
+      <div class="msg-meta"><span class="msg-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span></div>
+    </div>
+  </div>`;
+  document.getElementById('chat-input').value = '';
+  navTo('assistant');
+}
+
+document.getElementById('chat-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+
+function applyFmt(open, close) {
+  const ta = document.getElementById('chat-input');
+  const s = ta.selectionStart, e = ta.selectionEnd;
+  const sel = ta.value.slice(s, e);
+  ta.value = ta.value.slice(0,s) + open + sel + close + ta.value.slice(e);
+  ta.focus();
+  ta.setSelectionRange(s+open.length, e+open.length);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).catch(()=>{});
+}
+
+function addMsg(role, content, loading=false) {
+  const msgs = document.getElementById('chat-messages');
+  const id = 'msg-' + Date.now();
+  const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  const html = loading
+    ? `<div class="msg-row" id="${id}">
+        <div class="msg-avatar ai">🤖</div>
+        <div><div class="msg-bubble loading"><span class="spinner"></span> Thinking…</div></div>
+       </div>`
+    : role === 'user'
+    ? `<div class="msg-row user" id="${id}">
+        <div class="msg-avatar user">👤</div>
+        <div><div class="msg-bubble user">${escHtml(content)}</div><div class="msg-meta" style="justify-content:flex-end"><span class="msg-time">${time}</span></div></div>
+       </div>`
+    : `<div class="msg-row" id="${id}">
+        <div class="msg-avatar ai">🤖</div>
+        <div>
+          <div class="msg-bubble ai">${formatMarkdown(content)}</div>
+          <div class="msg-meta"><span class="msg-time">${time}</span><button class="copy-btn" onclick="copyText(${JSON.stringify(content)})">Copy</button></div>
+        </div>
+       </div>`;
+  msgs.insertAdjacentHTML('beforeend', html);
+  msgs.scrollTop = msgs.scrollHeight;
+  return id;
+}
+
+function updateMsg(id, content, fastCheck=false) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const time = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  el.innerHTML = `<div class="msg-avatar ai">🤖</div>
+    <div>
+      ${fastCheck ? '<div class="fast-check-badge">⚡ Fast Check</div>' : ''}
+      <div class="msg-bubble ai">${formatMarkdown(content)}</div>
+      <div class="msg-meta"><span class="msg-time">${time}</span><button class="copy-btn" onclick="copyText(${JSON.stringify(content)})">Copy</button></div>
+    </div>`;
+  document.getElementById('chat-messages').scrollTop = 99999;
+}
+
+function formatMarkdown(text) {
+  return escHtml(text)
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:#f3f4f6;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>')
+    .replace(/\n/g, '<br>');
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const btn = document.getElementById('send-btn');
+  input.value = '';
+  btn.disabled = true;
+  addMsg('user', text);
+  const loadingId = addMsg('ai', '', true);
+  try {
+    const reply = await processChatMessage(text);
+    updateMsg(loadingId, reply.content, reply.fastCheck);
+  } catch (e) {
+    updateMsg(loadingId, `Error: ${e.message}`);
+  } finally {
+    btn.disabled = false;
+    input.focus();
+  }
+}
+
+async function processChatMessage(text) {
+  const lower = text.toLowerCase().trim();
+
+  // Status / health
+  if (lower.includes('status') || lower.includes('health') || lower.includes('online')) {
+    const h = await apiFetch('/api/health');
+    let m = null;
+    try { m = await apiFetch('/api/model/metrics'); } catch {}
+    return { fastCheck: true, content: `**System Status**\n\n• Backend: ${h.status==='ok'?'✅ Online':'❌ Offline'}\n• Model ready: ${h.model_ready?'✅ Yes':'⚠️ Not trained'}\n• LLM enabled: ${h.llm_enabled?'✅ Yes':'⚠️ Deterministic fallback'}\n• Version: ${h.version}${m?`\n\n**Validation Metrics**\n• MAE: ${m.mae.toFixed(3)} kg\n• RMSE: ${m.rmse.toFixed(3)} kg\n• R²: ${m.r2.toFixed(4)}`:'\n\nModel metrics not available — train the model first.'}` };
+  }
+
+  // Model info
+  if (lower.includes('model') || lower.includes('r2') || lower.includes('mae') || lower.includes('rmse') || lower.includes('accuracy')) {
+    try {
+      const m = await apiFetch('/api/model/metrics');
+      return { fastCheck: true, content: `**Model Information**\n\nAlgorithm: RandomForestRegressor\nDataset: Kaggle food waste prediction (911 rows, synthetic)\nTarget: food_waste_kg\n\n**Validation Metrics**\n• MAE: ${m.mae.toFixed(3)} kg\n• RMSE: ${m.rmse.toFixed(3)} kg\n• R²: ${m.r2.toFixed(4)}\n• Train rows: ${m.train_rows} · Val rows: ${m.val_rows}\n\n⚠️ Prototype model — trained on synthetic data.` };
+    } catch (e) { return { content: `Model info unavailable: ${e.message}` }; }
+  }
+
+  // Predict
+  if (lower.includes('predict') || lower.includes('waste') || lower.includes('kg')) {
+    const mealsMatch = lower.match(/(\d+)\s*meals?/);
+    const meals = mealsMatch ? parseInt(mealsMatch[1]) : 300;
+    const cat = lower.includes('dairy')?'dairy':lower.includes('meat')?'meat':lower.includes('grain')?'grains':'vegetables';
+    try {
+      const res = await apiFetch('/api/predict', { method:'POST', body: JSON.stringify({
+        meals_served: meals, kitchen_staff: 12, temperature_C: 22.0, humidity_percent: 55.0,
+        day_of_week: new Date().getDay(), special_event: 0, past_waste_kg: 25.0, waste_category: cat
+      })});
+      return { fastCheck: true, content: `**Waste Prediction**\n\nEstimated food waste: **${res.predicted_food_waste_kg.toFixed(2)} kg**\n\n*Input factors:*\n• Meals served: ${meals}\n• Category: ${cat}\n• Day: ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date().getDay()]}\n\n*Model: ${res.model_status}*\n\n⚠️ ${res.disclaimer}\n\nUse the **Waste Predictions** page for a full prediction form.` };
+    } catch (e) { return { content: `Prediction failed: ${e.message}\n\nMake sure the model is trained.` }; }
+  }
+
+  // Match donation
+  if (lower.includes('match') || lower.includes('recipient') || lower.includes('plan')) {
+    try {
+      const dons = await apiFetch('/api/food?status=available&page_size=5');
+      if (dons.items.length === 0) return { content: 'No available food donations found.\n\nRegister available food on the **Food Donations** page first, then ask me to match it.' };
+      const matchNum = lower.match(/#?(\d+)/);
+      const target = matchNum ? (dons.items.find(d=>d.id===parseInt(matchNum[1])) || dons.items[0]) : dons.items[0];
+      const plan = await apiFetch(`/api/agent/plan/${target.id}`, { method:'POST' });
+      const top = plan.ranked_recipients[0];
+      return { content: `**Matching Plan for "${target.food_name}" (${target.quantity_kg} kg)**\n\n${plan.explanation}\n\n${top ? `**Top Match:** ${top.recipient.organization_name}\n• Score: ${top.score.toFixed(0)}/100\n• Available capacity: ${top.available_capacity_kg.toFixed(1)} kg\n• ${top.reasons[0]}` : 'No eligible recipients found.'}\n\n${plan.proposed_plan ? `📋 Plan #${plan.proposed_plan.id} created — status: **${plan.proposed_plan.status}**\n\nGo to **Matching** page to review and approve.` : ''}\n${plan.warnings.length?`\n⚠️ ${plan.warnings.join('; ')}`:''}${plan.fallback_mode?'\n\n*Fallback mode — set OPENAI_API_KEY for AI explanations.*':''}` };
+    } catch (e) { return { content: `Matching failed: ${e.message}` }; }
+  }
+
+  // Donations list
+  if (lower.includes('donation') || lower.includes('surplus') || lower.includes('food')) {
+    try {
+      const dons = await apiFetch('/api/food?page_size=5');
+      if (dons.items.length === 0) return { content: 'No food donations found. Visit **Food Donations** to register surplus food.' };
+      const list = dons.items.map(d=>`• **${d.food_name}** (${d.quantity_kg} kg) — ${d.status.replace(/_/g,' ')} — ${d.donor_name}`).join('\n');
+      return { content: `**Recent Food Donations** (${dons.total} total)\n\n${list}\n\nVisit **Food Donations** to manage all records.` };
+    } catch (e) { return { content: `Could not load donations: ${e.message}` }; }
+  }
+
+  // Default
+  return { content: `I can help you with:\n\n• **Waste predictions** — "Predict waste for 400 meals, dairy"\n• **Donation matching** — "Match donation #1"\n• **System status** — "Status"\n• **Model metrics** — "Model R² score"\n• **List donations** — "Show donations"\n\n*Tip: Use the sidebar to navigate to specific pages.*` };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PAGINATION
+// ═══════════════════════════════════════════════════════════════
+function renderPagination(containerId, page, totalPages, onPageChange) {
+  const el = document.getElementById(containerId);
+  if (!el || totalPages <= 1) { if(el) el.innerHTML = ''; return; }
+  el.innerHTML = `<span class="page-info">Page ${page} of ${totalPages}</span>
+    <button class="btn btn-secondary btn-sm" ${page<=1?'disabled':''} onclick="(${onPageChange})(${page-1})">← Previous</button>
+    <button class="btn btn-secondary btn-sm" ${page>=totalPages?'disabled':''} onclick="(${onPageChange})(${page+1})">Next →</button>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════════
+function escHtml(str) {
+  if (str == null) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Ctrl+K shortcut
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('search-input').focus();
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+(async function init() {
+  await pollStatus();
+  loadOverview();
+  setInterval(pollStatus, 30000);
+})();
+</script>
+</body>
+</html>

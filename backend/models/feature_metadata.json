@@ -1,0 +1,39 @@
+{
+  "feature_names": [
+    "meals_served",
+    "kitchen_staff",
+    "temperature_C",
+    "humidity_percent",
+    "day_of_week",
+    "special_event",
+    "past_waste_kg",
+    "staff_experience",
+    "waste_category"
+  ],
+  "numerical_features": [
+    "meals_served",
+    "kitchen_staff",
+    "temperature_C",
+    "humidity_percent",
+    "day_of_week",
+    "special_event",
+    "past_waste_kg"
+  ],
+  "categorical_features": [
+    "staff_experience",
+    "waste_category"
+  ],
+  "target": "food_waste_kg",
+  "mae": 4.794469937016893,
+  "rmse": 7.027261125140773,
+  "r2": 0.903619351591755,
+  "train_rows": 728,
+  "val_rows": 183,
+  "trained_at": "2026-10-09T16:48:49.818566+00:00",
+  "notes": [
+    "Prototype model trained on Kaggle synthetic/competition dataset.",
+    "Predictions should not be used as the sole basis for food-safety decisions.",
+    "staff_experience missing values (164/911 rows) imputed to 'unknown'.",
+    "waste_category values normalised to lower-case before encoding."
+  ]
+}
